@@ -1,1 +1,595 @@
-print('word')
+import tkinter as tk
+import tkinter.messagebox as messagebox
+from datetime import datetime
+import re
+import os
+import time
+
+class TheaterKioskProgram:
+    def __init__(self):
+        self.win = tk.Tk()
+        self.win.title('Sign in Window')
+        self.win.minsize(height=300, width=500)
+
+        self.title = tk.Label(self.win, text='Management System')
+        self.title.place(x=180, y=50)
+
+        self.login_button = tk.Button(self.win, text='Login',
+                                      width=10, command = self.login_handler)
+        self.login_button.place(x=100, y=150)
+
+        self.create_button = tk.Button(self.win, text='Creat Account',
+                                       width=10, command=self.creat_account)
+        self.create_button.place(x=200, y=150)
+
+
+        self.cancel_button = tk.Button(self.win, text='Cancel',
+                                       width=10, command=self.win.destroy)
+
+        self.cancel_button.place(x=300, y=150)
+
+        self.seat_info = {
+            '101': {'available': True, 'max_selection': 30, 'selected_count':0},
+            '102': {'available': True, 'max_selection': 30, 'selected_count':0},
+            '103': {'available': True, 'max_selection': 30, 'selected_count':0},
+            '104': {'available': True, 'max_selection': 30, 'selected_count':0},
+            '105': {'available': True, 'max_selection': 30, 'selected_count':0},
+            '108': {'available': True, 'max_selection': 40, 'selected_count':0},
+            '109': {'available': True, 'max_selection': 40, 'selected_count':0},
+            '110': {'available': True, 'max_selection': 40, 'selected_count':0},
+            '106': {'available': True, 'max_selection': 50, 'selected_count':0},
+            '107': {'available': True, 'max_selection': 50, 'selected_count':0},
+            '111': {'available': True, 'max_selection': 50, 'selected_count':0},
+            '112': {'available': True, 'max_selection': 50, 'selected_count':0},
+            '205': {'available': True, 'max_selection': 26, 'selected_count':0},
+            '206': {'available': True, 'max_selection': 27, 'selected_count':0},
+            '207': {'available': True, 'max_selection': 26, 'selected_count':0},
+            '203': {'available': True, 'max_selection': 30, 'selected_count':0},
+            '204': {'available': True, 'max_selection': 30, 'selected_count':0},
+            '208': {'available': True, 'max_selection': 30, 'selected_count':0},
+            '209': {'available': True, 'max_selection': 30, 'selected_count':0},
+            '201': {'available': True, 'max_selection': 20, 'selected_count':0},
+            '202': {'available': True, 'max_selection': 20, 'selected_count':0},
+            '210': {'available': True, 'max_selection': 20, 'selected_count':0},
+            '211': {'available': True, 'max_selection': 20, 'selected_count':0},
+            }
+            
+            
+
+    def creat_account(self):
+
+        self.sec_win = tk.Tk()
+        self.sec_win.title('Creat Account')
+        self.sec_win.minsize(height=300, width=500)
+
+        self.title = tk.Label(self.sec_win, text='Creat Account')
+        self.title.place(x=180, y=55)
+
+        self.username_label = tk.Label(self.sec_win, text='Enter Username')
+        self.username_label.place(x=100,y=75)
+
+        self.username = tk.Entry(self.sec_win)
+        self.username.place(x=100, y=100)
+
+        self.password_label = tk.Label(self.sec_win, text='Enter Password')
+        self.password_label.place(x=100,y=150)
+
+        self.password = tk.Entry(self.sec_win, show='*')
+        self.password.place(x=100, y=175)
+
+        self.close = tk.Button(self.sec_win, text='Close', command=self.sec_win.destroy)
+        self.close.place(x=250, y=215)
+
+        self.submit = tk.Button(self.sec_win, text='Submit',
+                                width=10, command=lambda: self.confirm_entry(self.username, self.password,
+                                                                             self.sec_win))
+        self.submit.place(x=100, y=215)
+
+        self.reqs_title = tk.Label(self.sec_win, text='Requirements')
+        self.reqs_title.place(x=100,y=250)
+
+        self.reqs = tk.Label(self.sec_win, text='Uppercase, Lowercase, Number, Special, 9 characters')
+        self.reqs.place(x=100,y=275)
+
+    def confirm_entry(self, username_entry, password_entry, sec_win):
+        username = username_entry.get()
+        password = password_entry.get()
+        username_entry.delete(0, tk.END)
+        password_entry.delete(0, tk.END)
+
+        if self.validate_password(password) == True:
+            sec_win.destroy()
+            messagebox.showinfo('Confirmed', 'Account has been created.')
+            account_data = {
+                'username': username,
+                'password': password
+                }
+            with open('accounts.txt', 'a') as file:
+                for key, value in account_data.items():
+                    file.write(f'{key}: {value}\n')
+            return True
+        else:
+            messagebox.showwarning('Error', 'Password must have at least one digit, uppercase letter, special character, and be at least 8 characters long.')
+            return False
+
+    def validate_password(self, password):
+
+        length=9
+        if len(password) < length:
+            return False
+        if not re.search(r'[A-Z]', password):
+            return False
+        if not re.search(r'[a-z]', password):
+            return False
+        if not re.search(r'[0-9]', password):
+            return False
+        if not re.search(r'[!@#$%^&*()<>?":{}|<>]', password):
+            return False
+        return True
+
+    def login_handler(self):
+        self.create_button.destroy()
+        self.login_button.place(x=155, y=150)
+        self.cancel_button.place(x=250, y=150)
+
+        account_data = 'accounts.txt'
+
+        if not os.path.exists(account_data) or os.path.getsize(account_data) == 0:
+            messagebox.showwarning('Warning', 'No accounts found. Please create an account')
+            return
+
+        self.third_win = tk.Toplevel()
+        self.third_win.title('Login')
+        self.third_win.minsize(height=300, width=500)
+
+        self.username_label = tk.Label(self.third_win, text='Enter Username')
+        self.username_label.place(x=50, y=50)
+
+        self.username_entry = tk.Entry(self.third_win)
+        self.username_entry.place(x=50, y=75)
+
+        self.password_label = tk.Label(self.third_win, text='Enter Password')
+        self.password_label.place(x=50, y=125)
+
+        self.password_entry = tk.Entry(self.third_win, show='*')
+        self.password_entry.place(x=50, y=150)
+
+        self.submit = tk.Button(self.third_win, text='Submit', command= lambda: self.login(self.username_entry, self.password_entry, self.third_win))
+        self.submit.place(x=50, y=175)
+
+        self.close = tk.Button(self.third_win, text='Close', command = self.third_win.destroy)
+        self.close.place(x=100, y=175)
+
+    def load_accounts(self):
+        self.creds = {}
+        try:
+            with open('accounts.txt', 'r') as file:
+                lines = file.readlines()
+                for i in range(0, len(lines), 2):
+                    username_line = lines[i].strip()
+                    password_line = lines[i+1].strip()
+                    if 'username: ' in username_line and 'password: ' in password_line:
+                        username = username_line.split(': ', 1)[1]
+                        password = password_line.split(': ', 1)[1]
+                        self.creds[username] = password
+        except Exception as e:
+            messagebox.showerror('Error', f"Failed to load accounts:{e}")
+        return self.creds
+
+    def validate_login(self, input_username, input_password):
+        credentials = self.load_accounts()
+        stored_password = credentials.get(input_username)
+        return input_password == stored_password if stored_password else False
+
+    def login(self, username_entry, password_entry, third_win):
+        username = username_entry.get()
+        password = password_entry.get()
+        password_entry.delete(0, tk.END)
+        username_entry.delete(0, tk.END)
+
+        if self.validate_login(username, password):
+            messagebox.showinfo('Login', 'Login successful')
+            third_win.destroy()
+            self.on_success()
+        else:
+            messagebox.showerror('Login', 'Login failed')
+                
+
+    def on_success(self):
+        event_option = tk.StringVar(value=' ')
+
+        selected_seats = []
+        total_price = 0.0
+
+        matinee_prices = {
+            '101': 50.00,
+            '102': 50.00,
+            '103': 50.00,
+            '104': 50.00,
+            '105': 50.00,
+            '108': 40.00,
+            '109': 40.00,
+            '110': 40.00,
+            '106': 30.00,
+            '107': 30.00,
+            '111': 30.00,
+            '112': 30.00,
+            '205': 20.00,
+            '206': 20.00,
+            '207': 20.00,
+            '203': 15.00,
+            '204': 15.00,
+            '208': 15.00,
+            '209': 15.00,
+            '201': 10.00,
+            '202': 10.00,
+            '210': 10.00,
+            '211': 10.00
+            }
+        evening_prices = {
+            '101': 80.00,
+            '102': 80.00,
+            '103': 80.00,
+            '104': 80.00,
+            '105': 80.00,
+            '108': 60.00,
+            '109': 60.00,
+            '110': 60.00,
+            '106': 50.00,
+            '107': 50.00,
+            '111': 50.00,
+            '112': 50.00,
+            '205': 40.00,
+            '206': 40.00,
+            '207': 40.00,
+            '203': 30.00,
+            '204': 30.00,
+            '208': 30.00,
+            '209': 30.00,
+            '201': 20.00,
+            '202': 20.00,
+            '210': 20.00,
+            '211': 20.00
+            }
+        evening_copy = evening_prices.copy()
+        matinee_copy = matinee_prices.copy()
+
+        
+
+        def price_selection():
+            price_win = tk.Toplevel()
+            price_win.title('Event Selection')
+            price_win.minsize(height=300, width=500)
+
+            selection_frame = tk.Frame(price_win)
+            selection_frame.pack(pady=20)
+
+            tk.Label(selection_frame, text='Select Event Type:').pack()
+
+            tk.Radiobutton(selection_frame, text='Matinee', variable=event_option, value='Matinee').pack(anchor=tk.W)
+            tk.Radiobutton(selection_frame, text='Evening', variable=event_option, value='Evening').pack(anchor=tk.W)
+
+            submit = tk.Button(selection_frame, text='Submit', command =lambda: event_handling(price_win))
+            submit.pack(pady=20)
+
+        def event_handling(price_win):
+            price_win.destroy()
+            selected_event = event_option.get()
+            
+            event_handling_win = tk.Toplevel()
+            event_handling_win.title('Event options')
+            event_handling_win.minsize(height=300, width=500)
+
+            option_label = tk.Label(event_handling_win, text='Do You Want To Change The Prices of:')
+            option_label.pack(pady=15)
+
+            event = tk.Label(event_handling_win, text=f'{selected_event}')
+            event.pack()
+
+            yes_button = tk.Button(event_handling_win, text='YES', width=10, command=lambda: yes(event_handling_win, selected_event))
+            yes_button.pack(pady=5)
+
+            no_button = tk.Button(event_handling_win, text='NO', width=10, command=lambda: no(event_handling_win, selected_event))
+            no_button.pack(pady=5)
+
+        def yes(window, event_type):
+            window.destroy()
+
+            change = tk.Toplevel()
+            change.title('Special Price')
+            change.minsize(height=700, width=500)
+
+            tk.Label(change, text=f'Current prices for {event_type}:').pack(pady=10)
+
+            # Create a frame for the scrollable area
+            scrollable_frame = tk.Frame(change)
+            scrollable_frame.pack(fill=tk.BOTH, expand=True)
+
+            # Create a canvas to contain the frame
+            canvas = tk.Canvas(scrollable_frame)
+            canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+            # Create a scrollbar
+            scrollbar = tk.Scrollbar(scrollable_frame, orient="vertical", command=canvas.yview)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+            # Configure the canvas
+            canvas.configure(yscrollcommand=scrollbar.set)
+
+            # Create a frame inside the canvas
+            scroll_canvas = tk.Frame(canvas)
+
+            # Add the scrollable frame to the canvas
+            canvas.create_window((0, 0), window=scroll_canvas, anchor="nw")
+
+            # Ensure the canvas updates its scroll region
+            def on_configure(event):
+                canvas.configure(scrollregion=canvas.bbox("all"))
+
+            scroll_canvas.bind("<Configure>", on_configure)
+
+            # Create headers for the columns
+            tk.Label(scroll_canvas, text='Seat ID').grid(row=0, column=0, padx=10, pady=5)
+            tk.Label(scroll_canvas, text='Current Price ($)').grid(row=0, column=1, padx=10, pady=5)
+
+            price_dict = matinee_copy if event_type == 'Matinee' else evening_copy
+
+            for row_index, (seat_id, price) in enumerate(price_dict.items(), start=1):
+                tk.Label(scroll_canvas, text=f'Seat {seat_id}:').grid(row=row_index, column=0, sticky=tk.W, padx=10)
+
+                price_entry = tk.Entry(scroll_canvas)
+                price_entry.grid(row=row_index, column=1, padx=10)
+                price_entry.insert(0, str(price))
+
+                def save_price(seat_id, entry):
+                    new_price = entry.get()
+                    try:
+                        price_dict[seat_id] = float(new_price)
+                        messagebox.showinfo('Success', f'Updated price for Seat {seat_id} to ${new_price}.')
+                    except ValueError:
+                        messagebox.showerror('Error', 'Please enter a valid price.')
+
+                save_button = tk.Button(scroll_canvas, text='Save', command=lambda seat_id=seat_id, entry=price_entry: save_price(seat_id, entry))
+                save_button.grid(row=row_index, column=2, padx=10, pady=5)
+
+            # button to close the window
+            close_button = tk.Button(change, text='Save', command=lambda: (customer_win(event_type, price_dict), manager_win(change, event_type, price_dict), change.destroy()))
+            close_button.pack(pady=20)                
+        def no(window, event_type):
+            price_dict = matinee_copy if event_type == 'Matinee' else evening_copy
+            window.destroy()
+            customer_win(event_type, price_dict)
+            manager_win(None, event_type, price_dict)
+
+
+        def manager_win(change, event_type, price_dict):
+            if change == None:
+                print('none')
+            else:
+                change.destroy()
+            if event_type == 'Matinee':
+                first_event = event_type
+                second_event = 'Evening'
+                print(f'first event {first_event}, second event {second_event}')
+            elif event_type == 'Evening':
+                first_event = event_type
+                second_event = 'Matinee'
+                print(f' first event {first_event}, second event {second_event}')
+
+            def check_file():
+
+                with open('total_sales_data.txt', 'r') as file:
+                    lines = file.readlines()
+
+                    total_sales = 0.0
+                    total_tickets = 0
+
+                    for line in lines:
+                        if line.startswith('total sales:'):
+                            total_sales = float(line.split(':')[1].strip())
+                        elif line.startswith('total tickets:'):
+                            total_tickets = int(line.split(':')[1].strip())
+
+                print(total_sales)
+                print(total_tickets)
+                
+            check_file()
+            
+            manager_win = tk.Toplevel()
+            manager_win.title('Manager Window')
+            manager_win.minsize(height=500, width=600)
+
+            manager_win.after(5000, check_file)
+
+            matinee_price_button = tk.Button(manager_win, text='view matinee seat prices')
+            matinee_price_button.place(x=50, y=100)
+
+            evening_price_button = tk.Button(manager_win, text='view evening seat prices')
+            evening_price_button.place(x=50, y=125)
+
+            starting_event = tk.Label(manager_win, text=f'The First Event is {first_event}')
+            starting_event.place(x=400, y=50)
+
+            next_event = tk.Label(manager_win, text=f'The Next Event is {second_event}')
+            next_event.place(x=400, y=75)
+            
+
+        def customer_win(event_type, event_seats):
+            customer_win = tk.Toplevel()
+            customer_win.title('Customer Window')
+            customer_win.minsize(height=600, width=1000)
+
+            def update_clock():
+                current_time = time.strftime('%H:%M')
+                clock.config(text=event_time)
+                clock.after(1000, update_clock)
+
+            clock = tk.Label(customer_win, font=('Helvetica', 15), fg='black')
+            clock.place(x=500, y=75)
+
+            
+
+            image_path = "Theater.gif"
+            photo = tk.PhotoImage(file= image_path)
+
+            image_label = tk.Label(customer_win, image=photo)
+            image_label.photo = photo
+            image_label.place(x=600, y=50)
+
+            if event_type == 'Matinee':
+                first_event = event_type
+                second_event = 'Evening'
+                event_time = '13:30'
+                start = tk.Label(customer_win, text=f'Show starts at\n 14:00')
+                start.place(x=490, y = 25)
+                Next = tk.Label(customer_win, text=f'Next show starts at\n 20:00')
+                Next.place(x=475, y = 115)
+            elif event_type == 'Evening':
+                first_event = event_type
+                second_event = 'Matinee'
+                event_time = '19:30'
+                start = tk.Label(customer_win, text=f'Show starts at\n 20:00')
+                start.place(x=490, y = 25)
+                Next = tk.Label(customer_win, text=f'Next show starts at\n 14:00')
+                Next.place(x=475, y = 115)
+                
+                
+
+            current_event = tk.Label(customer_win, text=f'the current event is {first_event}')
+            current_event.place(x=675, y=25)
+
+            next_event = tk.Label(customer_win, text=f'the next event is {second_event}')
+            next_event.place(x=850, y=25)
+
+            row = 0
+            col = 0
+            for seat_id in event_seats.keys():
+                seat_button = tk.Button(customer_win, text=f'Seat {seat_id}\nPrice: ${event_seats[seat_id]:.2f}',
+                                        command=lambda s=seat_id: select_seat(s))
+                seat_button.grid(row=row, column=col, padx=10, pady=10)
+
+                col+=1
+                if col > 2:
+                    col = 0
+                    row +=1
+
+            purchase_button = tk.Button(customer_win, text='Purchase', command=lambda: print_receipt(event_seats), width=10)
+            purchase_button.place(x=200, y=425)
+
+            next_show_button = tk.Button(customer_win, text='Next Show', command=lambda: switch_event(event_type, event_seats), width=10)
+            next_show_button.place(x=200, y=455)
+    
+
+            def switch_event(current_event, price_dict):
+
+                next_event = 'Evening' if current_event == 'Matinee' else 'Matinee'
+                messagebox.showinfo('Next Show', f'Switching to {next_event} event.')
+                customer_win(next_event, price_dict)
+
+            def select_seat(seat):
+                seat_info = self.seat_info.get(seat)
+
+                if seat_info:
+                    if seat_info['available'] and seat_info['selected_count'] < seat_info['max_selection']:
+                       seat_info['selected_count'] += 1
+                       selected_seats.append(seat)
+
+                       available_seats = seat_info['max_selection'] - seat_info['selected_count']
+                       messagebox.showinfo('Seat Selected',
+                                           f'Seat {seat} selected! Total selection: {seat_info["selected_count"]}, Available seats: {available_seats}')
+
+                       if seat_info['selected_count'] >= seat_info['max_selection']:
+                           seat_info['available'] = False
+                           messagebox.showwarning('Seat Limit Reached', f'Seat {seat} is now unavailable.')
+                    else:
+                        if not seat_info['available']:
+                            messagebox.showwarning('Seat Unavailable', f'Seat {seat} is not available')
+                        
+                        else:
+                            messagebox.showwarning('Selection Limit', f'Seat {seat} has reached its Selection limit')
+                else:
+                    messagebox.showerror('Seat Error', f'Seat {seat} not found.')
+
+                if all(not s['available'] for s in self.seat_info.values()):
+                    messagebox.showwarning('No Seats Available', 'All seats are now fully booked.')
+
+               
+
+            def print_receipt(event_seats):
+                if not selected_seats:
+                    messagebox.showinfo('No Seats Selected', 'No seats were selected. please selecte your seats.')
+                    return
+
+                
+                total_price = sum(event_seats[seat] for seat in selected_seats)
+                receipt_text = f'Receipt for {event_type} Show\n\n'
+                receipt_text += 'Selected Seats:\n'
+
+                for seat in selected_seats:
+                    receipt_text += f'Seat {seat} - ${event_seats[seat]:.2f}\n'
+
+                receipt_text += f'\nTotal Price: ${total_price:.2f}'
+                messagebox.showinfo('Receipt', receipt_text)
+
+                tickets_sold = len(selected_seats)
+                store_sales_data(tickets_sold, total_price)
+
+                selected_seats.clear()
+
+            def store_sales_data(tickets_sold, total_price):
+                # Initialize default values
+                tickets = 0
+                sales = 0
+
+                # Try to read existing data from the file
+                try:
+                    with open('total_sales_data.txt', 'r') as file:
+                        for line in file:
+                            if line.startswith('total tickets:'):
+                                tickets = int(line.split(':')[1].strip())
+                            elif line.startswith('total sales:'):
+                                sales = float(line.split(':')[1].strip())
+                except FileNotFoundError:
+                    # File doesn't exist yet, so start from defaults
+                    pass
+
+                # Update totals
+                tickets += tickets_sold
+                sales += total_price
+
+                # Save updated totals back to the file
+                total_data = {
+                    'total sales': sales,
+                    'total tickets': tickets
+                }
+
+                with open('total_sales_data.txt', 'w') as file:
+                    for key, value in total_data.items():
+                        file.write(f'{key}: {value}\n')
+                    
+
+                
+
+                print(f'Total Tickets Sold: {tickets_sold}, Total Price: ${total_price:.2f}')
+                
+
+            
+
+
+
+            update_clock()
+
+
+        price_selection()
+
+            
+
+    
+
+        
+
+        
+    
+        
+menu = TheaterKioskProgram()
+menu.win.mainloop()
